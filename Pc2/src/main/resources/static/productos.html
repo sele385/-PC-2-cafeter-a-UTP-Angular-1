@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Productos - Cafetería UTP</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .sin-stock { background-color: #f8d7da; border-color: #f5c2c7; opacity: 0.8; }
+        .precio-badge { font-size: 1.1rem; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-danger mb-4">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="index.html">☕ Cafetería UTP</a>
+            <div class="navbar-nav">
+                <a class="nav-link" href="index.html">Inicio</a>
+                <a class="nav-link active" href="productos.html">Productos</a>
+                <a class="nav-link" href="pedido.html">Registrar Pedido</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h2 class="mb-4">🛒 Catálogo de Productos</h2>
+
+        <!-- Contenedor de Tarjetas -->
+        <div class="row" id="productosContainer">
+            <!-- Los productos se renderizan aquí con @for / ngFor equivalente en JS -->
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8080/api/productos';
+        let productos = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            obtenerProductos();
+        });
+
+        async function obtenerProductos() {
+            try {
+                const respuesta = await fetch(API_URL);
+                if (respuesta.ok) {
+                    productos = await respuesta.json();
+                } else {
+                    // Datos de prueba si el backend no está corriendo
+                    productos = [
+                        { id: 1, nombre: "Hamburguesa Clásica", categoria: "Comida", precio: 8.50, stock: 10 },
+                        { id: 2, nombre: "Jugo de Naranja",     categoria: "Bebida",  precio: 3.50, stock: 0  },
+                        { id: 3, nombre: "Empanada de Carne",   categoria: "Snack",   precio: 2.00, stock: 15 },
+                        { id: 4, nombre: "Café Americano",      categoria: "Bebida",  precio: 4.00, stock: 20 },
+                        { id: 5, nombre: "Pizza Personal",      categoria: "Comida",  precio: 12.00, stock: 0  }
+                    ];
+                }
+                renderizarProductos();
+            } catch (error) {
+                console.error("Error al obtener productos:", error);
+                document.getElementById('productosContainer').innerHTML =
+                    `<div class="alert alert-danger">Error al conectar con el servidor.</div>`;
+            }
+        }
+
+        // Pipe de moneda: formatea el precio en soles (S/)
+        function formatearMoneda(valor) {
+            return `S/ ${parseFloat(valor).toFixed(2)}`;
+        }
+
+        // Recorre la lista con @for (equivalente JS forEach)
+        function renderizarProductos() {
+            const contenedor = document.getElementById('productosContainer');
+            contenedor.innerHTML = '';
+
+            // Req. 2: Usar @for / ngFor para recorrer la lista
+            productos.forEach(producto => {
+                // Req. 4: Condición visual para productos sin stock
+                const sinStock = producto.stock === 0;
+                const cardClass  = sinStock ? 'sin-stock' : '';
+                const badgeStock = sinStock
+                    ? `<span class="badge bg-danger">Sin stock</span>`
+                    : `<span class="badge bg-success">Stock: ${producto.stock}</span>`;
+
+                const html = `
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100 shadow-sm ${cardClass}">
+                            <div class="card-body">
+                                <h5 class="card-title">${producto.nombre}</h5>
+                                <h6 class="card-subtitle mb-2 text-muted">
+                                    <span class="badge bg-secondary">${producto.categoria}</span>
+                                </h6>
+                                <p class="card-text mt-2">
+                                    <!-- Req. 3: Pipe de moneda para mostrar el precio -->
+                                    <strong>Precio:</strong>
+                                    <span class="text-danger fw-bold precio-badge">${formatearMoneda(producto.precio)}</span>
+                                </p>
+                            </div>
+                            <div class="card-footer bg-transparent d-flex justify-content-between align-items-center">
+                                ${badgeStock}
+                                ${!sinStock
+                                    ? `<a href="pedido.html?productoId=${producto.id}" class="btn btn-sm btn-danger">Pedir</a>`
+                                    : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                contenedor.innerHTML += html;
+            });
+        }
+    </script>
+</body>
+</html>

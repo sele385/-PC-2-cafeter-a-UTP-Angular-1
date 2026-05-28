@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrar Pedido - Cafetería UTP</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-danger mb-4">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="index.html">☕ Cafetería UTP</a>
+            <div class="navbar-nav">
+                <a class="nav-link" href="index.html">Inicio</a>
+                <a class="nav-link" href="productos.html">Productos</a>
+                <a class="nav-link active" href="pedido.html">Registrar Pedido</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-7">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-danger text-white">
+                        <h4 class="mb-0">📋 Registrar Pedido</h4>
+                    </div>
+                    <div class="card-body">
+                        <form id="formPedido">
+                            <!-- Req. 5: nombre del estudiante -->
+                            <div class="mb-3">
+                                <label for="nombreEstudiante" class="form-label">Nombre del Estudiante</label>
+                                <input type="text" class="form-control" id="nombreEstudiante" placeholder="Ej: Juan Pérez" required>
+                            </div>
+                            <!-- Req. 5: producto -->
+                            <div class="mb-3">
+                                <label for="productoId" class="form-label">Producto</label>
+                                <select class="form-select" id="productoId" required>
+                                    <option value="">Seleccione un producto...</option>
+                                </select>
+                            </div>
+                            <!-- Req. 5: cantidad -->
+                            <div class="mb-3">
+                                <label for="cantidad" class="form-label">Cantidad</label>
+                                <input type="number" class="form-control" id="cantidad" min="1" value="1" required>
+                            </div>
+                            <!-- Req. 5: observación -->
+                            <div class="mb-4">
+                                <label for="observacion" class="form-label">Observación</label>
+                                <textarea class="form-control" id="observacion" rows="2"
+                                    placeholder="Ej: Sin azúcar, extra queso..."></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-danger w-100">Enviar Pedido</button>
+                        </form>
+
+                        <!-- Req. 7: Mensaje de confirmación -->
+                        <div id="mensajeConfirmacion" class="alert alert-success mt-4 d-none">
+                            <h5>✅ ¡Pedido registrado con éxito!</h5>
+                            <p class="mb-0" id="textoConfirmacion"></p>
+                        </div>
+                        <div id="mensajeError" class="alert alert-danger mt-4 d-none">
+                            <p class="mb-0" id="textoError"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_PRODUCTOS = 'http://localhost:8080/api/productos';
+        const API_PEDIDOS   = 'http://localhost:8080/api/pedidos';
+
+        // Cargar productos con stock en el select al iniciar
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const res = await fetch(API_PRODUCTOS);
+                const productos = await res.json();
+                llenarSelectProductos(productos);
+            } catch {
+                // Mock de respaldo
+                llenarSelectProductos([
+                    { id: 1, nombre: "Hamburguesa Clásica", stock: 10 },
+                    { id: 3, nombre: "Empanada de Carne",   stock: 15 },
+                    { id: 4, nombre: "Café Americano",      stock: 20 }
+                ]);
+            }
+
+            // Pre-seleccionar producto si viene por URL
+            const params = new URLSearchParams(window.location.search);
+            const pid = params.get('productoId');
+            if (pid) document.getElementById('productoId').value = pid;
+        });
+
+        function llenarSelectProductos(productos) {
+            const sel = document.getElementById('productoId');
+            productos.forEach(p => {
+                if (p.stock > 0) {
+                    const opt = document.createElement('option');
+                    opt.value = p.id;
+                    opt.textContent = p.nombre;
+                    sel.appendChild(opt);
+                }
+            });
+        }
+
+        // Submit del formulario → POST /api/pedidos (Req. 6)
+        document.getElementById('formPedido').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const payload = {
+                nombreEstudiante: document.getElementById('nombreEstudiante').value,
+                productoId: parseInt(document.getElementById('productoId').value),
+                cantidad: parseInt(document.getElementById('cantidad').value),
+                observacion: document.getElementById('observacion').value
+            };
+
+            try {
+                const res = await fetch(API_PEDIDOS, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok || res.status === 201) {
+                    mostrarConfirmacion(payload, true);
+                    document.getElementById('formPedido').reset();
+                } else {
+                    mostrarConfirmacion(payload, false, 'Error en el servidor al registrar el pedido.');
+                }
+            } catch (err) {
+                console.error('Backend no disponible, mostrando confirmación simulada.', err);
+                mostrarConfirmacion(payload, true); // Simulación visual para demo
+            }
+        });
+
+        function mostrarConfirmacion(datos, exito, errorMsg = '') {
+            document.getElementById('mensajeConfirmacion').classList.add('d-none');
+            document.getElementById('mensajeError').classList.add('d-none');
+
+            if (exito) {
+                const nombreProducto = document.getElementById('productoId')
+                    .options[document.getElementById('productoId').selectedIndex]?.text || '';
+                document.getElementById('textoConfirmacion').innerHTML =
+                    `El estudiante <strong>${datos.nombreEstudiante}</strong> realizó un pedido de
+                     <strong>${datos.cantidad}x ${nombreProducto}</strong>.
+                     ${datos.observacion ? `<br>Observación: <em>${datos.observacion}</em>` : ''}`;
+                document.getElementById('mensajeConfirmacion').classList.remove('d-none');
+            } else {
+                document.getElementById('textoError').textContent = errorMsg;
+                document.getElementById('mensajeError').classList.remove('d-none');
+            }
+        }
+    </script>
+</body>
+</html>

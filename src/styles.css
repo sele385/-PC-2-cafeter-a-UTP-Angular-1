@@ -1,0 +1,6 @@
+/* Estilos globales Cafetería UTP */
+.sin-stock {
+  background-color: #f8d7da !important;
+  border-color: #f5c2c7 !important;
+  opacity: 0.85;
+}
