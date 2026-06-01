@@ -168,8 +168,11 @@ export class PedidoComponent implements OnInit {
           this.mensajeExito = false;
         }
       },
-      error: () => {
-        this.mensajeError = 'No se pudo conectar con el servidor.';
+      error: (err) => {
+        // ✅ Ahora captura el error real del servidor
+        console.error('Error al registrar pedido:', err);
+        const errorMessage = err?.error?.message || err?.error?.error || 'No se pudo conectar con el servidor.';
+        this.mensajeError = errorMessage;
         this.mensajeExito = false;
       }
     });
