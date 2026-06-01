@@ -49,7 +49,6 @@ export class ProductoService {
 
   registrarPedido(pedido: PedidoRequest): Observable<any> {
     return this.http
-      .post(`${this.apiUrl}/api/pedidos`, pedido, { observe: 'response' })
-      .pipe(catchError(() => of({ status: 201 })));
+      .post(`${this.apiUrl}/api/pedidos`, pedido, { observe: 'response' });
   }
 }
