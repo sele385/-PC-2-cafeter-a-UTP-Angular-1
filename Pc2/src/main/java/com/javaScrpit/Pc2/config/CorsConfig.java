@@ -12,7 +12,7 @@ public class CorsConfig implements WebMvcConfigurer {
     private final String[] allowedOrigins;
 
     public CorsConfig(
-        @Value("${app.cors.allowed-origins:https://pc-2-cafeter-a-utp-angular-1-1.onrender.com}") String allowedOrigins) {
+        @Value("${app.cors.allowed-origins:http://localhost:*,http://127.0.0.1:*}") String allowedOrigins) {
         this.allowedOrigins = Arrays.stream(allowedOrigins.split(","))
             .map(String::trim)
             .filter(value -> !value.isEmpty())
