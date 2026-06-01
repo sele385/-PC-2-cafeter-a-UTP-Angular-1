@@ -50,4 +50,9 @@ public class PedidoController {
 
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
+    // GET /api/pedidos
+    @GetMapping
+    public ResponseEntity<java.util.List<Pedido>> listarPedidos() {
+        return ResponseEntity.ok(pedidoRepository.findAll());
+    }
 }
